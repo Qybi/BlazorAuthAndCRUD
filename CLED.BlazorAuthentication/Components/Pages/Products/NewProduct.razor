@@ -1,0 +1,84 @@
+﻿@page "/manage/product"
+@page "/manage/product/{id:int}"
+@using CLED.BlazorAuthentication.Data
+@using CLED.BlazorAuthentication.Models
+@using CLED.BlazorAuthentication.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject ProductService _prodService
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager;
+
+<h3>Edit customer</h3>
+
+<EditForm Model="Product"
+          FormName="createUpdate"
+          OnValidSubmit="SendData">
+    <InputNumber style="display: none;" @bind-Value="Product.Id" />
+
+    <div class="form-group">
+        <label for="txtName">Name</label>
+        <InputText id="txtName"
+                   class="form-control"
+                   @bind-Value="Product.Name" />
+    </div>
+
+    <div class="form-group">
+        <label for="price">Price</label>
+        <InputNumber id="price" class="form-control" @bind-Value="Product.Price" />
+    </div>
+
+    <br />
+
+    @if (Id.HasValue)
+    {
+        <button type="submit" class="btn btn-primary">Update</button>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Create</button>
+    }
+    <a href="/" class="btn btn-secondary">Cancel</a>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Product? Product { get; set; } = new();
+
+    [CascadingParameter]
+    public HttpContext Context { get; set; } = default!;
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(Context.Request.Method))
+        {
+            if (Id.HasValue)
+                Product = await _prodService.GetById(Id.Value);
+        }
+    }
+
+    private async Task SendData()
+    {
+        var authState = await AuthenticationState;
+        var user = authState.User;
+        if (Id.HasValue)
+        {
+            Product.ModifiedDate = DateTime.Now;
+            Product.ModifiedBy = UserManager.GetUserId(user);
+            await _prodService.Update(Product);
+        }
+        else
+        {
+            Product.CreatedDate = DateTime.Now;
+            Product.CreatedBy = UserManager.GetUserId(user);
+            await _prodService.Insert(Product);
+        }
+        Nav.NavigateTo("/"); //naviga alla home
+    }
+}

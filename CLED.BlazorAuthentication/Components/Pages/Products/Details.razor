@@ -1,0 +1,33 @@
+﻿@page "/details/{id:int}"
+@using CLED.BlazorAuthentication.Models
+@using CLED.BlazorAuthentication.Services
+@inject ProductService _prodService
+
+@if (_product is not null)
+{
+    <h3>Details @_product.Id</h3>
+    <p>
+        Name: <strong>@_product.Name</strong><br />
+        Price: <strong>@_product.Price</strong>
+    </p>
+    <br />
+
+}
+else
+{
+    <p>Product not found</p>
+}
+
+<a href="/" class="btn btn-primary">Go to list</a>
+
+@code {
+    private Product? _product;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _product = await _prodService.GetById(Id);
+    }
+}

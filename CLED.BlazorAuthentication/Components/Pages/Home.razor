@@ -1,0 +1,50 @@
+﻿@page "/"
+@using CLED.BlazorAuthentication.Data
+@using CLED.BlazorAuthentication.Models
+@using CLED.BlazorAuthentication.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@* @attribute [Authorize(Roles = "Editor")]
+@attribute [Authorize(Roles = "Admin")] *@
+@inject UserManager<ApplicationUser> UserManager
+@inject ProductService _prodService
+
+<PageTitle>Home</PageTitle>
+
+<h1>Products</h1>
+
+<a href="/manage/product/@null" class="btn btn-primary">New</a>
+<hr />
+
+@foreach (var item in _list)
+{
+	<div>
+		<h5>@item.Name</h5>
+		<p>@item.Price</p>
+		<a href="/details/@item.Id" class="btn btn-primary">Details</a>
+		<a href="/manage/product/@item.Id" class="btn btn-primary">Edit</a>
+		<a href="/delete/@item.Id" class="btn btn-danger">Delete</a>
+	</div>
+}
+
+@code {
+	[CascadingParameter]
+	public Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+
+	private IEnumerable<Product> _list = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationState;
+		var user = authState.User;
+
+		if (user.Identity!.IsAuthenticated)
+		{
+			var username = user.Identity.Name;
+			var userId = UserManager.GetUserId(user);
+			var aspnetUser = await UserManager.GetUserAsync(user);
+		}
+
+		_list = await _prodService.GetAll(); 
+	}
+}
